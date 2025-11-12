@@ -40,13 +40,6 @@ def compress_image(input_path, output_path=None, quality=85, max_width=None, max
     except Exception as e:
         raise ValueError(f"Error opening image: {e}")
     
-    # Convert RGBA to RGB if saving as JPEG
-    if img.mode == 'RGBA' and file_ext in ['.jpg', '.jpeg']:
-        # Create a white background
-        rgb_img = Image.new('RGB', img.size, (255, 255, 255))
-        rgb_img.paste(img, mask=img.split()[3])  # Use alpha channel as mask
-        img = rgb_img
-    
     # Resize if dimensions specified
     if max_width or max_height:
         original_width, original_height = img.size
@@ -70,9 +63,19 @@ def compress_image(input_path, output_path=None, quality=85, max_width=None, max
         input_file = Path(input_path)
         output_path = input_file.parent / f"{input_file.stem}_compressed{input_file.suffix}"
     
+    # Get output file extension
+    output_ext = Path(output_path).suffix.lower()
+    
+    # Convert RGBA to RGB if saving as JPEG
+    if img.mode == 'RGBA' and output_ext in ['.jpg', '.jpeg']:
+        # Create a white background
+        rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+        rgb_img.paste(img, mask=img.split()[3])  # Use alpha channel as mask
+        img = rgb_img
+    
     # Save compressed image
     try:
-        if file_ext == '.png':
+        if output_ext == '.png':
             img.save(output_path, 'PNG', optimize=True)
         else:  # jpg or jpeg
             img.save(output_path, 'JPEG', quality=quality, optimize=True)
